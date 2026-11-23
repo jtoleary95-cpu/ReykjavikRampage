@@ -36,13 +36,23 @@ body[data-mode=foot] [data-m~=foot],body[data-mode=car] [data-m~=car],body[data-
 #loading{position:fixed;inset:0;z-index:30;background:#081018;display:flex;flex-direction:column;align-items:center;justify-content:center;font:900 34px 'Arial Black',Impact,sans-serif;letter-spacing:2px}
 #rot{position:fixed;inset:0;z-index:40;background:#081018;display:none;align-items:center;justify-content:center;text-align:center;font:700 18px system-ui;padding:30px}
 @media (orientation:portrait){#rot{display:flex}}
+#wpd{position:absolute;left:calc(10px + env(safe-area-inset-left));top:calc(166px + env(safe-area-inset-top));width:150px;text-align:center;font:800 14px system-ui;color:#e3b8ff;text-shadow:1px 1px 0 #000;display:none}
+#wparrow{position:fixed;width:36px;height:36px;z-index:4;pointer-events:none;display:none}
+#wparrow:before{content:'';position:absolute;left:4px;top:6px;border-left:30px solid #c45cff;border-top:12px solid transparent;border-bottom:12px solid transparent;filter:drop-shadow(0 0 3px #000)}
+#fmap{position:fixed;inset:0;z-index:15;display:none;background:#2b4a5c}#fmc{position:absolute;inset:0;touch-action:none}
+#fmTop{position:absolute;left:0;right:0;top:calc(8px + env(safe-area-inset-top));display:flex;justify-content:space-between;align-items:center;padding:0 calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));pointer-events:none}
+#fmInfo{background:#000a;padding:6px 12px;border-radius:8px;font:600 13px system-ui}
+#fmTop button,#fmBot button{pointer-events:auto;background:#0b1520e6;color:#fff;border:1px solid #fff5;border-radius:8px;padding:8px 12px;font:700 13px system-ui}
+#fmBot{position:absolute;left:0;right:0;bottom:calc(8px + env(safe-area-inset-bottom));display:flex;flex-direction:column;gap:6px;padding:0 calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left))}
+#fmPlaces{display:flex;gap:6px;overflow-x:auto}#fmPlaces button{white-space:nowrap}#fmAct{display:flex;gap:8px;justify-content:flex-end}#fmTaxi{background:#f2c200!important;color:#111!important;border-color:#f2c200!important}
 #loading small{font:600 14px system-ui;opacity:.7;margin-top:10px;letter-spacing:0}
 </style></head><body data-mode="foot">
 <div id="loading">REYKJAVÍK RAMPAGE<small>Building the city…</small></div>
 <div id="rot">Turn your phone sideways to play 📱↻</div><div id="touch"></div>
 <div id="hud"><canvas id="mini" width="150" height="150"></canvas>
  <div id="tr"><div id="money">$0</div><div id="stars"></div><div id="hp"><div id="hpb"></div></div><div id="vh"><div id="vhp"></div></div></div>
- <div id="toast"></div><div id="big"></div><div id="speed"></div><div id="hurt"></div></div>
+ <div id="toast"></div><div id="big"></div><div id="speed"></div><div id="hurt"></div><div id="wpd"></div></div><div id="wparrow"></div>
+
 <div id="joy"><div id="knob"></div></div>
 <div id="top"><button data-tap="cam">CAM</button><button data-tap="set">⚙</button></div>
 <div id="btns">
@@ -1088,12 +1098,12 @@ function drawHUD(){$('money').textContent='$'+SAVE.money.toLocaleString();const 
  $('vh').style.display=v?'block':'none';
  // minimap
  const W=150,C=W/2;mm.save();mm.clearRect(0,0,W,W);mm.beginPath();mm.arc(C,C,C,0,7);mm.clip();mm.fillStyle='#2b4a5c';mm.fillRect(0,0,W,W);const zoom=v&&v.kind!=='car'?.45:1.1;
- mm.translate(C,C);mm.rotate(CAM.yaw+Math.PI);mm.scale(zoom,zoom);const px=(player.pos.x+MAP_S/2)*MAP_K,pz=(player.pos.z+MAP_S/2)*MAP_K;mm.drawImage(mapBase,-px,-pz);
+ mm.translate(C,C);mm.rotate(CAM.yaw+Math.PI);mm.scale(zoom,zoom);const px=(player.pos.x+MAP_S/2)*MAP_K,pz=(player.pos.z+MAP_S/2)*MAP_K;mm.drawImage(mapBase,-px,-pz);navMini(px,pz,zoom);
  const blip=(x,z,col,r=3.5,txt)=>{const bx=(x+MAP_S/2)*MAP_K-px,bz=(z+MAP_S/2)*MAP_K-pz;mm.save();mm.translate(bx,bz);mm.rotate(-(CAM.yaw+Math.PI));const R2=Math.hypot(bx,bz)*zoom;if(R2>C-6){mm.restore();const a=Math.atan2(bz,bx);mm.save();mm.translate(Math.cos(a)*(C-6)/zoom,Math.sin(a)*(C-6)/zoom);mm.rotate(-(CAM.yaw+Math.PI))}
   mm.fillStyle=col;if(txt){mm.font=`bold ${9/zoom}px sans-serif`;mm.textAlign='center';mm.textBaseline='middle';mm.beginPath();mm.arc(0,0,6/zoom,0,7);mm.fill();mm.fillStyle='#000';mm.fillText(txt,0,.5/zoom)}else{mm.beginPath();mm.arc(0,0,r/zoom,0,7);mm.fill()}mm.restore()};
  blip(MK.garage.position.x,MK.garage.position.z,'#ffcc33',0,'G');blip(MK.chop.position.x,MK.chop.position.z,'#33ff77',0,'$');blip(POI.hospital.x,POI.hospital.z,'#ff6b6b',0,'H');blip(POI.airport.x,POI.airport.z,'#9cd3ff',0,'✈');blip(POI.helipad2.x,POI.helipad2.z,'#9cd3ff',0,'H');
  const fl=Math.floor(U.uTime.value*4)%2;for(const c of VEHICLES)if(c.T.cop&&!c.dead&&c.ai)blip(c.pos.x,c.pos.z,fl?'#3b6cff':'#ff3b3b',3.5);for(const p of PEDS)if(p.role==='cop'&&p.state!=='dead')blip(p.pos.x,p.pos.z,fl?'#3b6cff':'#ff3b3b',2.2);
- mm.restore();mm.save();mm.translate(C,C);mm.rotate(-(player.mode==='foot'?player.h:player.veh.h)+CAM.yaw+Math.PI);mm.fillStyle='#fff';mm.beginPath();mm.moveTo(0,-7);mm.lineTo(5,6);mm.lineTo(0,3);mm.lineTo(-5,6);mm.closePath();mm.fill();mm.restore();
+ mm.restore();mm.save();mm.translate(C,C);mm.rotate(-(player.mode==='foot'?player.h:player.veh.h)+CAM.yaw);mm.fillStyle='#fff';mm.beginPath();mm.moveTo(0,-7);mm.lineTo(5,6);mm.lineTo(0,3);mm.lineTo(-5,6);mm.closePath();mm.fill();mm.restore();
  mm.strokeStyle='rgba(0,0,0,.6)';mm.lineWidth=3;mm.beginPath();mm.arc(C,C,C-1.5,0,7);mm.stroke();
  if(toastT>0){toastT-=1/60;if(toastT<=0)$('toast').style.opacity=0}}
 
@@ -1108,9 +1118,10 @@ function resetSave(){if(!confirm('Erase money and saved cars?'))return;SAVE.mone
 function update(dt){const gdt=dt*timeScale;U.uTime.value+=gdt;updateLights(gdt);const inp=readInput();
  stepPlayer(gdt,inp);stepVehicles(gdt);vehicleContacts();pedVehicleHits();for(const p of [...PEDS])if(!p.removed)stepPed(p,gdt);stepPolice(gdt);stepFX(gdt);
  fpsT+=dt;if(fpsT>.5){manageTraffic(fpsT);managePeds();checkWorldSpawns();fpsT=0}
- updateCamera(dt);updateEnv(gdt);return inp}
+ updateCamera(dt);updateEnv(gdt);navUpdate(gdt);return inp}
 let last=performance.now(),frames=0,fpsT=0;
 function frame(now){requestAnimationFrame(frame);let dt=clamp((now-last)/1000,0,.05);last=now;if($('set').style.display==='block'){renderer.render(scene,camera);return}
+ if(NAV.open){drawFullMap();return}
  const inp=update(dt);drawHUD();
  const v=player.veh;let siren=0;for(const c of VEHICLES)if(c.T.cop&&c.siren&&!c.dead){const d=Math.hypot(c.pos.x-camera.position.x,c.pos.z-camera.position.z);siren=Math.max(siren,clamp(1-d/220,0,1))}
  sfx.update({car:!!(v&&v.kind==='car'&&!v.dead),rpm:v?clamp(Math.abs(v.spd)/v.T.max||0,0,1)*.8+(Math.abs(inp.jy)>.1?.2:0):0,load:Math.abs(inp.jy),heli:v&&v.kind==='heli'?v.rotorSpd:(v&&v.kind==='plane'?v.thr*.6:0),siren});
@@ -1125,7 +1136,10 @@ function boot(){resize();applyQuality();applySeason();setupInput();CAM.fp=SAVE.s
  setTimeout(()=>toast('Yellow G = your garage (saves cars). Green $ = Bílapartar buys stolen cars.',5),5500);setTimeout(()=>toast('Helicopters at Perlan and the airport ✈. Planes at the airport.',5),11000);
  requestAnimationFrame(frame)}
 
-window.setOpt=setOpt;window.resetSave=resetSave;window.applySeason=applySeason;window.Ped=Ped;window.animHuman=animHuman;window.applyQuality2=applyQuality;window.__G={update,stepFor:(sec)=>{for(let i=0;i<sec*30;i++)update(1/30)},player,VEHICLES,PEDS,POLICE,SAVE,CAM,Vehicle,crime,enterVehicle,exitVehicle,tapAct,BTN,JOY,KEY,ENV,POI,camera,renderer,scene};
+/* map feature not included */
+const NAV={open:false};function navUpdate(){}function navMini(){}function drawFullMap(){}function closeMap(){}function clearWaypoint(){}function mapButtons(){}function taxi(){}function pickPlace(){}function openMap(){}function setWaypoint(){}
+
+window.setOpt=setOpt;window.closeMap=closeMap;window.clearWaypoint=clearWaypoint;window.mapButtons=mapButtons;window.taxi=taxi;window.pickPlace=pickPlace;window.openMap=openMap;window.resetSave=resetSave;window.applySeason=applySeason;window.Ped=Ped;window.animHuman=animHuman;window.applyQuality2=applyQuality;window.__G={NAV,setWaypoint,update,stepFor:(sec)=>{for(let i=0;i<sec*30;i++)update(1/30)},player,VEHICLES,PEDS,POLICE,SAVE,CAM,Vehicle,crime,enterVehicle,exitVehicle,tapAct,BTN,JOY,KEY,ENV,POI,camera,renderer,scene};
 boot()}catch(e){document.getElementById('loading').innerHTML='Error: '+e.message+'<small>'+(e.stack||'').split('\n').slice(0,3).join(' | ')+'</small>';console.error(e)}},60);
 </script>
 </body></html>
