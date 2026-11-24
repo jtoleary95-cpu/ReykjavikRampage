@@ -6529,7 +6529,7 @@ function openSettings(){const S=SAVE.set;const row=(k,label,opts)=>`<div class="
  $('set').innerHTML=`<h2>Settings</h2>${row('season','Season',[['summer','Summer'],['winter','Winter']])}${row('slip','Slippery roads',[[false,'Off'],[true,'On']])}${row('time','Time of day',[['cycle','Cycle'],['day','Day'],['night','Night']])}${row('hq','Graphics',[[true,'High'],[false,'Fast']])}${row('inv','Plane pitch',[[false,'Pull down = climb'],[true,'Push up = climb']])}${row('nowanted','Wanted level',[[false,'On'],[true,'Off (no cops)']])}${row('man','Jet maneuvers',[['btn','Buttons'],['hand','Better handling']])}${row('dogfight','Enemy fighters',[[false,'Off'],[true,'On']])}${(()=>{const t=S.traffic||20;return `<div class="srow"><span>Traffic</span><div><button onclick="setOpt('traffic',${Math.max(10,t-10)})">−</button><button class="sel">${t}%</button><button onclick="setOpt('traffic',${Math.min(100,t+10)})">+</button></div></div>`})()}
  <p class="tip">Cars saved: ${SAVE.cars.length}/10 · Aircraft saved: ${SAVE.air.length}/4 · Money $${SAVE.money.toLocaleString()}</p><div class="srow"><button onclick="resetSave()">Reset save</button><button onclick="closeSet()">Close</button></div>`;$('set').style.display='block'}
 function setOpt(k,v){SAVE.set[k]=v;save();if(k==='season')applySeason();if(k==='hq')applyQuality();if(k==='nowanted'&&v){clearWanted();for(const p of [...PEDS])if(p.role==='cop'&&p.state!=='dead')p.remove()}openSettings()}
-function resetSave(){if(!confirm('Erase money and saved cars?'))return;SAVE.money=250;SAVE.cars=[];SAVE.air=[];save();spawnSavedCars();spawnSavedAir();openSettings()}
+function resetSave(){if(!confirm('Erase money and saved cars?'))return;SAVE.money=250;SAVE.cars=[];SAVE.air=[];save();for(const v of [...VEHICLES])if((v.savedIdx!=null||v.savedAir!=null)&&v!==player.veh)v.remove();openSettings()}
 
 /* ---------- loop ---------- */
 function update(dt){const gdt=dt*timeScale;RB_DT=gdt;U.uTime.value+=gdt;updateLights(gdt);const inp=readInput();
@@ -6547,7 +6547,7 @@ function frame(now){requestAnimationFrame(frame);let dt=clamp((now-last)/1000,0,
 
 /* ---------- boot ---------- */
 function boot(){splitByRegion();resize();applyQuality();applySeason();setupInput();CAM.fp=SAVE.set.cam==='fp';
- player.pos.set(POI.garage.x+6,0,POI.garage.z+1);player.h=Math.PI/2;CAM.yaw=Math.PI/2;spawnSavedCars();spawnSavedAir();checkWorldSpawns();
+ player.pos.set(POI.garage.x+6,0,POI.garage.z+1);player.h=Math.PI/2;CAM.yaw=Math.PI/2;giveZ();checkWorldSpawns();
  const st=new Vehicle('hatch',POI.garage.x+14,POI.garage.z+5.5,Math.PI/2,{color:'#c8423a'});
  for(let i=0;i<40;i++){manageTraffic(1);managePeds()}
  $('loading').style.display='none';toast('Velkomin to Reykjavík. Walk up to a car and tap ENTER.',5);
